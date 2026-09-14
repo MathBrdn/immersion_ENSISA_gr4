@@ -77,32 +77,6 @@ int jeu_joueur_actuel(void)
     return current_player;
 }
 
-int jeu_case_jaune(int row, int col)
-{
-    if (row == 6)
-        return col >= 0 && col <= 2;
-
-    if (row == 5)
-        return col == 3;
-
-    if (row == 4)
-        return col == 4;
-
-    if (row == 3)
-        return col == 5;
-
-    if (row == 2)
-        return col == 6;
-
-    if (row == 1)
-        return col == 7;
-
-    if (row == 0)
-        return col >= 8 && col <= 10;
-
-    return 0;
-}
-
 /* verifie qu'il n'y a pas de piece entre le depart et l'arrivee */
 static int chemin_libre(Piece *piece, int new_row, int new_col)
 {
