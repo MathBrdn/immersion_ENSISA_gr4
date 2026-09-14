@@ -25,7 +25,6 @@ int jeu_piece_at(int row, int col);
 int jeu_joueur_actuel(void);
 int jeu_peut_deplacer(int piece_index, int new_row, int new_col);
 int jeu_deplacer(int piece_index, int new_row, int new_col);
-int jeu_case_jaune(int row, int col);
 int jeu_valeur_case(int row, int col);
 
 #endif
