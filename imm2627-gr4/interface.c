@@ -3,9 +3,18 @@
 
 #include "jeu.h"
 
-/* Positions des deux croix distinctes */
-static int x1_col = -1, x1_row = -1; /* Croix du Joueur BLEU */
-static int x2_col = -1, x2_row = -1; /* Croix du Joueur ROUGE */
+/* Structure pour représenter une case */
+typedef struct {
+    int row;
+    int col;
+} Coord;
+
+/* Coordonnées par défaut des barricades (10, 6) */
+static const Coord coord_init_barricade = {6, 10}; /* 10e colonne, 6e ligne */
+
+/* Coordonnées affichées sur le plateau (-1 = masqué tant qu'aucun clic n'a eu lieu) */
+static int x1_col = -1, x1_row = -1; /* Croix BLEU */
+static int x2_col = -1, x2_row = -1; /* Croix ROUGE */
 
 /* Suivi du premier coup de chaque joueur */
 static bool croix_posee_j1 = false;
@@ -14,20 +23,16 @@ static bool croix_posee_j2 = false;
 /* Pièce actuellement sélectionnée (-1 si aucune) */
 static int selected_piece = -1;
 
-/* Structure pour représenter une case */
-typedef struct {
-    int row;
-    int col;
-} Coord;
-
-/* Tableaux de coordonnées autorisées pour la pose des barricades */
+/* Tableaux de coordonnées autorisées pour la pose */
 static const Coord CASES_AUTORISEES_BLEU[] = {
-    {0, 4}, {0, 5}, {0, 6}, {0, 7},{1, 4}, {1, 5}, {1, 6},{2, 3}, {2, 4}, {2, 5},{3, 2},{3, 3},{3, 4},{4, 0},{4, 1},{4, 2},{4, 3},{5, 0},{5, 1},{5, 2}
+    {0, 4}, {0, 5}, {0, 6}, {0, 7}, {1, 4}, {1, 5}, {1, 6}, {2, 3}, {2, 4}, {2, 5},
+    {3, 2}, {3, 3}, {3, 4}, {4, 0}, {4, 1}, {4, 2}, {4, 3}, {5, 0}, {5, 1}, {5, 2}
 };
 static const int NB_CASES_BLEU = sizeof(CASES_AUTORISEES_BLEU) / sizeof(CASES_AUTORISEES_BLEU[0]);
 
 static const Coord CASES_AUTORISEES_ROUGE[] = {
-    {1, 10}, {1, 9}, {1, 8}, {2, 10},{2, 9}, {2, 8}, {2, 7},{3, 8}, {3, 7}, {3, 6}, {4, 7},{4, 6},{4, 5},{5, 4},{5, 5},{5, 6},{6, 6},{6, 5},{6, 4},{6, 3}
+    {1, 10}, {1, 9}, {1, 8}, {2, 10}, {2, 9}, {2, 8}, {2, 7}, {3, 8}, {3, 7}, {3, 6},
+    {4, 7}, {4, 6}, {4, 5}, {5, 4}, {5, 5}, {5, 6}, {6, 6}, {6, 5}, {6, 4}, {6, 3}
 };
 static const int NB_CASES_ROUGE = sizeof(CASES_AUTORISEES_ROUGE) / sizeof(CASES_AUTORISEES_ROUGE[0]);
 
@@ -66,6 +71,7 @@ static void draw_piece(cairo_t *cr, const char *symbol, int color, double x, dou
 /* Dessine une croix centrée */
 static void draw_croix(cairo_t *cr, int col, int row, double cell_w, double cell_h)
 {
+    /* Ne dessine RIEN si la coordonnée vaut -1 (pas encore posée) */
     if (col == -1 || row == -1) return;
 
     cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
@@ -98,28 +104,17 @@ static void draw_board(GtkDrawingArea *area, cairo_t *cr, int width, int height,
 
     /* Cases jaunes */
     cairo_set_source_rgb(cr, 1.0, 0.82, 0.28);
-    cairo_rectangle(cr, 8 * cell_w, 0 * cell_h, cell_w, cell_h); 
-    cairo_fill(cr);
-    cairo_rectangle(cr, 9 * cell_w, 0 * cell_h, cell_w, cell_h); 
-    cairo_fill(cr);
-    cairo_rectangle(cr, 10 * cell_w, 0 * cell_h, cell_w, cell_h);
-     cairo_fill(cr);
-    cairo_rectangle(cr, 7 * cell_w, 1 * cell_h, cell_w, cell_h); 
-    cairo_fill(cr);
-    cairo_rectangle(cr, 6 * cell_w, 2 * cell_h, cell_w, cell_h);
-    cairo_fill(cr);
-    cairo_rectangle(cr, 5 * cell_w, 3 * cell_h, cell_w, cell_h);
-    cairo_fill(cr);
-    cairo_rectangle(cr, 4 * cell_w, 4 * cell_h, cell_w, cell_h); 
-    cairo_fill(cr);
-    cairo_rectangle(cr, 3 * cell_w, 5 * cell_h, cell_w, cell_h);
-    cairo_fill(cr);
-    cairo_rectangle(cr, 2 * cell_w, 6 * cell_h, cell_w, cell_h);
-    cairo_fill(cr);
-    cairo_rectangle(cr, 1 * cell_w, 6 * cell_h, cell_w, cell_h); 
-    cairo_fill(cr);
-    cairo_rectangle(cr, 0 * cell_w, 6 * cell_h, cell_w, cell_h); 
-    cairo_fill(cr);
+    cairo_rectangle(cr, 8 * cell_w, 0 * cell_h, cell_w, cell_h); cairo_fill(cr);
+    cairo_rectangle(cr, 9 * cell_w, 0 * cell_h, cell_w, cell_h); cairo_fill(cr);
+    cairo_rectangle(cr, 10 * cell_w, 0 * cell_h, cell_w, cell_h); cairo_fill(cr);
+    cairo_rectangle(cr, 7 * cell_w, 1 * cell_h, cell_w, cell_h); cairo_fill(cr);
+    cairo_rectangle(cr, 6 * cell_w, 2 * cell_h, cell_w, cell_h); cairo_fill(cr);
+    cairo_rectangle(cr, 5 * cell_w, 3 * cell_h, cell_w, cell_h); cairo_fill(cr);
+    cairo_rectangle(cr, 4 * cell_w, 4 * cell_h, cell_w, cell_h); cairo_fill(cr);
+    cairo_rectangle(cr, 3 * cell_w, 5 * cell_h, cell_w, cell_h); cairo_fill(cr);
+    cairo_rectangle(cr, 2 * cell_w, 6 * cell_h, cell_w, cell_h); cairo_fill(cr);
+    cairo_rectangle(cr, 1 * cell_w, 6 * cell_h, cell_w, cell_h); cairo_fill(cr);
+    cairo_rectangle(cr, 0 * cell_w, 6 * cell_h, cell_w, cell_h); cairo_fill(cr);
 
     /* Case bleue */
     cairo_set_source_rgb(cr, 0.0, 0.0, 1.0);
@@ -238,7 +233,7 @@ static void draw_board(GtkDrawingArea *area, cairo_t *cr, int width, int height,
     }
     cairo_stroke(cr);
 
-    /* Affichage des deux croix */
+    /* Affichage des deux croix (seulement si posées) */
     draw_croix(cr, x1_col, x1_row, cell_w, cell_h);
     draw_croix(cr, x2_col, x2_row, cell_w, cell_h);
 
@@ -292,16 +287,16 @@ static void board_clicked(GtkGestureClick *gesture, int n_press,
 
     /* 1.1 Pose de la Croix BLEUE */
     if (joueur == BLEU && !croix_posee_j1) {
-        /* Vérification si la case est autorisée via le tableau */
         if (!est_dans_tableau(row, col, CASES_AUTORISEES_BLEU, NB_CASES_BLEU)) {
             return;
         }
 
+        /* Active l'affichage de la croix sur la case cliquée */
         x1_col = col;
         x1_row = row;
         croix_posee_j1 = true;
 
-        jeu_poser_barricade(row, col); /* Bloque la case définitivement */
+        jeu_poser_barricade(row, col); /* Bloque la case dans le moteur */
         jeu_changer_joueur();          /* Tour au Rouge pour poser son X */
         gtk_widget_queue_draw(GTK_WIDGET(drawing_area));
         return;
@@ -309,24 +304,23 @@ static void board_clicked(GtkGestureClick *gesture, int n_press,
 
     /* 1.2 Pose de la Croix ROUGE */
     if (joueur == ROUGE && !croix_posee_j2) {
-        /* Vérification si la case est autorisée via le tableau */
         if (!est_dans_tableau(row, col, CASES_AUTORISEES_ROUGE, NB_CASES_ROUGE)) {
             return;
         }
 
+        /* Active l'affichage de la croix sur la case cliquée */
         x2_col = col;
         x2_row = row;
         croix_posee_j2 = true;
 
-        jeu_poser_barricade(row, col); /* Bloque la case définitivement */
-        jeu_changer_joueur();          /* Tour au Bleu pour démarrer les déplacements */
+        jeu_poser_barricade(row, col); /* Bloque la case dans le moteur */
+        jeu_changer_joueur();          /* Tour au Bleu pour démarrer la partie */
         gtk_widget_queue_draw(GTK_WIDGET(drawing_area));
         return;
     }
 
-    /* --- PHASE 2 : DÉPLACEMENT DE PIONS EN ALTERNANCE --- */
+    /* --- PHASE 2 : DÉPLACEMENT DES PIÈCES --- */
 
-    /* 1. Sélection d'une pièce */
     if (selected_piece == -1) {
         int p = jeu_piece_at(row, col);
 
@@ -340,7 +334,6 @@ static void board_clicked(GtkGestureClick *gesture, int n_press,
         return;
     }
 
-    /* 2. Traitement du déplacement de la pièce */
     Piece *piece = jeu_piece(selected_piece);
     if (piece == NULL) {
         selected_piece = -1;
@@ -348,14 +341,12 @@ static void board_clicked(GtkGestureClick *gesture, int n_press,
         return;
     }
 
-    /* Clic sur la même case : annule la sélection */
     if (row == piece->row && col == piece->col) {
         selected_piece = -1;
         gtk_widget_queue_draw(GTK_WIDGET(drawing_area));
         return;
     }
 
-    /* Déplacement effectif */
     if (jeu_deplacer(selected_piece, row, col)) {
         selected_piece = -1;
         gtk_widget_queue_draw(GTK_WIDGET(drawing_area));
